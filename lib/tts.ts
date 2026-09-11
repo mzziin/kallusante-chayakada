@@ -25,13 +25,14 @@ export interface SarvamTtsResponse {
  */
 async function callSarvamRest(
   ttsText: string,
-  apiKey: string
+  apiKey: string,
+  speaker: string = process.env.SARVAM_SPEAKER || "gokul"
 ): Promise<string | null> {
   const requestBody: SarvamTtsRequest = {
     inputs: [ttsText],
     target_language_code: "ml-IN",
-    speaker: "karun",
-    model: "bulbul:v2",
+    speaker,
+    model: process.env.SARVAM_MODEL || "bulbul:v3",
     pitch: 0,
     pace: 1.0,
     loudness: 1.0,
@@ -93,11 +94,11 @@ export async function generateTtsAudio(ttsText: string): Promise<string | null> 
     );
   }
 
-  // Attempt 2: Retry once with short backoff (§15)
+  // Attempt 2: Retry once with short backoff (§15) and speaker fallback
   await new Promise((resolve) => setTimeout(resolve, 300));
 
   try {
-    const audio = await callSarvamRest(cleanText, apiKey);
+    const audio = await callSarvamRest(cleanText, apiKey, "vijay");
     if (audio) return audio;
   } catch (retryErr: unknown) {
     const errMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
