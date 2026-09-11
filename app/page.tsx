@@ -5,20 +5,27 @@ import { Controls } from "@/components/Controls";
 import { CharacterStage } from "@/components/CharacterStage";
 import { ChatInput } from "@/components/ChatInput";
 import { SpeechBubble } from "@/components/SpeechBubble";
-import { CharacterState, Emotion, Gesture } from "@/lib/animations";
+import { useAppStore } from "@/store/useAppStore";
 
 export default function Home() {
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const {
+    currentTopic,
+    lastRoast,
+    characterState,
+    emotion,
+    gesture,
+    isGenerating,
+    voiceEnabled,
+    rateLimitNotice,
+    sendMessage,
+    resetConversation,
+    setVoiceEnabled,
+    setCharacterState,
+    clearRateLimitNotice,
+  } = useAppStore();
+
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [inputText, setInputText] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [currentRoast, setCurrentRoast] = useState<string | null>(null);
-  const [currentTopic, setCurrentTopic] = useState<string | null>(null);
-
-  // Character animation state machine per §3, §10
-  const [characterState, setCharacterState] = useState<CharacterState>("IDLE_PEEKING");
-  const [emotion, setEmotion] = useState<Emotion>("neutral");
-  const [gesture, setGesture] = useState<Gesture>("idle");
 
   // Manage dynamic transitions between IDLE_PEEKING and TYPING_WATCHING
   useEffect(() => {
@@ -26,56 +33,14 @@ export default function Home() {
 
     if (isInputFocused && inputText.length > 0) {
       setCharacterState("TYPING_WATCHING");
-    } else {
+    } else if (!isInputFocused && characterState === "TYPING_WATCHING") {
       setCharacterState("IDLE_PEEKING");
     }
-  }, [isInputFocused, inputText, isGenerating]);
+  }, [isInputFocused, inputText, isGenerating, characterState, setCharacterState]);
 
   const handleSendMessage = (message: string) => {
-    // 1. Enter THINKING state while waiting for LLM response (§10)
-    setIsGenerating(true);
-    setCharacterState("THINKING");
-
-    // Client-side simulation of the state lifecycle (§10) for Task Group 2 verification
-    setTimeout(() => {
-      setIsGenerating(false);
-      setCurrentTopic("General");
-      setCurrentRoast(
-        `Ente ponnedave, "${message}" enn parayan thante kayyil enthaano ollath? Ithokke ketittu aarkkelum santhosham varumo? Ha!`
-      );
-      setEmotion("skeptical");
-      setGesture("head_shake");
-
-      // Transition to REACTING
-      setCharacterState("REACTING");
-
-      // Then transition to ROAST_TALKING
-      setTimeout(() => {
-        setCharacterState("ROAST_TALKING");
-
-        // Then transition to LAUGHING
-        setTimeout(() => {
-          setCharacterState("LAUGHING");
-
-          // Finally return to IDLE_PEEKING (§10)
-          setTimeout(() => {
-            setCharacterState("IDLE_PEEKING");
-            setEmotion("neutral");
-            setGesture("idle");
-          }, 1800);
-        }, 2200);
-      }, 700);
-    }, 1200);
-  };
-
-  const handleResetConversation = () => {
-    setCurrentRoast(null);
-    setCurrentTopic(null);
+    sendMessage(message);
     setInputText("");
-    setIsGenerating(false);
-    setCharacterState("IDLE_PEEKING");
-    setEmotion("neutral");
-    setGesture("idle");
   };
 
   return (
@@ -83,13 +48,13 @@ export default function Home() {
       {/* Top Navigation & Controls */}
       <Controls
         voiceEnabled={voiceEnabled}
-        onToggleVoice={() => setVoiceEnabled((prev) => !prev)}
-        onResetConversation={handleResetConversation}
+        onToggleVoice={() => setVoiceEnabled(!voiceEnabled)}
+        onResetConversation={resetConversation}
         isGenerating={isGenerating}
       />
 
       {/* Hero Section: Centered Character + Input + Speech Bubble */}
-      <section className="flex-1 flex flex-col justify-center items-center px-4 py-8 max-w-2xl mx-auto w-full">
+      <section className="flex-1 flex flex-col justify-center items-center px-4 py-6 max-w-2xl mx-auto w-full">
         {/* Character Stage (Positioned behind & above the input box) */}
         <CharacterStage
           state={characterState}
@@ -98,6 +63,29 @@ export default function Home() {
           isInputFocused={isInputFocused}
           inputTextLength={inputText.length}
         />
+
+        {/* Rate limit warning notification (§12, §13) */}
+        {rateLimitNotice && (
+          <div
+            role="alert"
+            className="w-full max-w-xl mx-auto mb-3 px-4 py-2.5 rounded-xl bg-amber-950/80 border border-amber-600/60 text-amber-200 text-xs sm:text-sm flex items-center justify-between shadow-lg backdrop-blur-md animate-fadeIn z-20"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-base" aria-hidden="true">
+                ⏳
+              </span>
+              <span>{rateLimitNotice}</span>
+            </div>
+            <button
+              type="button"
+              onClick={clearRateLimitNotice}
+              aria-label="Dismiss notification"
+              className="text-amber-400 hover:text-amber-100 text-xs font-bold px-1.5 py-0.5 rounded transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         {/* Vertically Centered Chat Input Box */}
         <ChatInput
@@ -109,10 +97,11 @@ export default function Home() {
 
         {/* Current Roast Speech Bubble */}
         <SpeechBubble
-          response={currentRoast}
+          response={lastRoast?.response}
           isGenerating={isGenerating}
           topic={currentTopic}
-          audioAvailable={false}
+          skipRoast={lastRoast?.skipRoast}
+          audioAvailable={lastRoast?.audioAvailable}
         />
       </section>
 
