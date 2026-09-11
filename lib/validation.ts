@@ -63,7 +63,7 @@ export type RoastRequest = z.infer<typeof roastRequestSchema>;
 export const rawLlmResponseSchema = z.object({
   response: z.string(),
   ttsText: z.string().optional(),
-  related: z.boolean().optional().default(true),
+  related: z.union([z.boolean(), z.string()]).optional().default(true),
   topic: z.string().optional().default("General"),
   emotion: z.string().optional(),
   gesture: z.string().optional(),

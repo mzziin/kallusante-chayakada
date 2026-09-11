@@ -21,8 +21,9 @@ export const FALLBACK_ROAST: RoastResponse = {
   audioAvailable: false,
 };
 
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
 const GEMINI_ENDPOINT =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+  `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 /**
  * Strip potential markdown code fences from model text
@@ -53,7 +54,7 @@ async function callGeminiRest(
     ],
     generationConfig: {
       temperature: 0.9,
-      maxOutputTokens: 256,
+      maxOutputTokens: 1024,
       responseMimeType: "application/json",
     },
     safetySettings: [
