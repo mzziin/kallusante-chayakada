@@ -15,9 +15,11 @@ export default function Home() {
     emotion,
     gesture,
     isGenerating,
+    isSpeaking,
     voiceEnabled,
     rateLimitNotice,
     sendMessage,
+    replayVoice,
     resetConversation,
     setVoiceEnabled,
     setCharacterState,
@@ -29,14 +31,16 @@ export default function Home() {
 
   // Manage dynamic transitions between IDLE_PEEKING and TYPING_WATCHING
   useEffect(() => {
-    if (isGenerating) return;
+    if (isGenerating || isSpeaking || characterState === "REACTING" || characterState === "ROAST_TALKING" || characterState === "LAUGHING") {
+      return;
+    }
 
     if (isInputFocused && inputText.length > 0) {
       setCharacterState("TYPING_WATCHING");
     } else if (!isInputFocused && characterState === "TYPING_WATCHING") {
       setCharacterState("IDLE_PEEKING");
     }
-  }, [isInputFocused, inputText, isGenerating, characterState, setCharacterState]);
+  }, [isInputFocused, inputText, isGenerating, isSpeaking, characterState, setCharacterState]);
 
   const handleSendMessage = (message: string) => {
     sendMessage(message);
@@ -62,6 +66,7 @@ export default function Home() {
           gesture={gesture}
           isInputFocused={isInputFocused}
           inputTextLength={inputText.length}
+          isSpeaking={isSpeaking}
         />
 
         {/* Rate limit warning notification (§12, §13) */}
@@ -101,7 +106,9 @@ export default function Home() {
           isGenerating={isGenerating}
           topic={currentTopic}
           skipRoast={lastRoast?.skipRoast}
-          audioAvailable={lastRoast?.audioAvailable}
+          isSpeaking={isSpeaking}
+          onReplayVoice={replayVoice}
+          audioAvailable={Boolean(lastRoast?.audioAvailable)}
         />
       </section>
 

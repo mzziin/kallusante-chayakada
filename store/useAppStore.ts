@@ -21,19 +21,33 @@ export interface AppState {
   emotion: Emotion;
   gesture: Gesture;
   isGenerating: boolean;
+  isSpeaking: boolean;
   voiceEnabled: boolean;
   rateLimitNotice: string | null;
 
   // Actions
+  primeAudio: () => void;
   sendMessage: (content: string) => Promise<void>;
+  replayVoice: () => void;
   resetConversation: () => void;
   setVoiceEnabled: (enabled: boolean) => void;
   setCharacterState: (state: CharacterState) => void;
   clearRateLimitNotice: () => void;
 }
 
+// Module-level audio element reference for autoplay priming (§11)
+let primedAudioElement: HTMLAudioElement | null = null;
+
+function getAudioElement(): HTMLAudioElement | null {
+  if (typeof window === "undefined") return null;
+  if (!primedAudioElement) {
+    primedAudioElement = new Audio();
+  }
+  return primedAudioElement;
+}
+
 export const useAppStore = create<AppState>((set, get) => ({
-  // Initialize with a fresh in-memory session UUID (§5)
+  // In-memory state only per §4, §5
   sessionId: generateSessionId(),
   messages: [],
   currentTopic: null,
@@ -44,30 +58,49 @@ export const useAppStore = create<AppState>((set, get) => ({
   emotion: "neutral",
   gesture: "idle",
   isGenerating: false,
+  isSpeaking: false,
   voiceEnabled: true,
   rateLimitNotice: null,
+
+  /**
+   * Prime browser audio element during user submit event to satisfy
+   * Mobile Safari and Android autoplay restrictions (§11)
+   */
+  primeAudio: () => {
+    try {
+      const audio = getAudioElement();
+      if (audio) {
+        audio.load();
+      }
+    } catch {
+      // Best-effort priming; fail silently per §11
+    }
+  },
 
   sendMessage: async (content: string) => {
     const trimmed = content.trim();
     if (!trimmed || get().isGenerating) return;
+
+    // 1. Prime audio on user gesture
+    get().primeAudio();
 
     const currentSessionId = get().sessionId;
     const currentMessages = get().messages;
     const currentTopic = get().currentTopic;
     const existingSummary = get().historySummary;
 
-    // 1. Enter THINKING state while LLM processes (§10)
+    // 2. Enter THINKING state while LLM + TTS pipeline runs (§10)
     set({
       isGenerating: true,
       characterState: "THINKING",
+      isSpeaking: false,
       rateLimitNotice: null,
     });
 
-    // 2. Prepare in-memory conversation history & sliding window (§5, §8)
+    // 3. Prepare bounded conversation context
     const newUserTurn: MessageTurn = { role: "user", content: trimmed };
     const updatedMessages = [...currentMessages, newUserTurn];
 
-    // Compute bounded context
     const recentMessages = getSlidingWindowMessages(currentMessages);
     const olderMessages = getOlderMessagesForSummarization(updatedMessages);
     const newSummary = rollupConversationSummary(existingSummary, currentTopic, olderMessages);
@@ -85,7 +118,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         }),
       });
 
-      // Handle Rate Limiting HTTP 429 per §12, §13
+      // Handle Rate Limiting HTTP 429 (§12, §13)
       if (response.status === 429) {
         const rateLimitData = await response.json().catch(() => ({}));
         const retrySec = rateLimitData.retryAfterSeconds || 30;
@@ -104,7 +137,6 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       const data: RoastResponse = await response.json();
 
-      // Add assistant response to in-memory conversation
       const newAssistantTurn: MessageTurn = {
         role: "assistant",
         content: data.response,
@@ -120,39 +152,152 @@ export const useAppStore = create<AppState>((set, get) => ({
         isGenerating: false,
       });
 
-      // Character State Lifecycle transitions (§10)
+      // 4. State Lifecycle: REACTING beat (§10)
       set({ characterState: "REACTING" });
 
-      setTimeout(() => {
-        set({ characterState: "ROAST_TALKING" });
+      const proceedToRoastTalking = () => {
+        const voiceOn = get().voiceEnabled;
+        const audioBase64 = data.audio;
 
+        // If Voice is enabled and audio is present, play speech (§11)
+        if (voiceOn && audioBase64) {
+          try {
+            const audio = getAudioElement();
+            if (audio) {
+              const audioSrc = audioBase64.startsWith("data:")
+                ? audioBase64
+                : `data:audio/wav;base64,${audioBase64}`;
+
+              audio.src = audioSrc;
+
+              audio.onplay = () => {
+                set({
+                  isSpeaking: true,
+                  characterState: "ROAST_TALKING",
+                });
+              };
+
+              audio.onended = () => {
+                set({ isSpeaking: false, characterState: "LAUGHING" });
+
+                // Small laugh beat, then transition to IDLE_PEEKING (§10)
+                setTimeout(() => {
+                  set({
+                    characterState: "IDLE_PEEKING",
+                    emotion: "neutral",
+                    gesture: "idle",
+                  });
+                }, 1800);
+              };
+
+              audio.onerror = () => {
+                // Fail silently into text-only animation path (§11, §15)
+                runTextFallbackTalkingLifecycle();
+              };
+
+              const playPromise = audio.play();
+              if (playPromise !== undefined) {
+                playPromise.catch(() => {
+                  // Autoplay restriction or decode failure; fail silently into fallback
+                  runTextFallbackTalkingLifecycle();
+                });
+              }
+              return;
+            }
+          } catch {
+            runTextFallbackTalkingLifecycle();
+            return;
+          }
+        }
+
+        // Voice disabled or TTS failed: proceed with text-only animation loop (§11, §15)
+        runTextFallbackTalkingLifecycle();
+      };
+
+      const runTextFallbackTalkingLifecycle = () => {
+        set({
+          isSpeaking: false,
+          characterState: "ROAST_TALKING",
+        });
+
+        // Estimated reading duration ~2.6s (§15)
         setTimeout(() => {
           set({ characterState: "LAUGHING" });
 
           setTimeout(() => {
-            // Return to IDLE_PEEKING
             set({
               characterState: "IDLE_PEEKING",
               emotion: "neutral",
               gesture: "idle",
             });
           }, 1800);
-        }, 2200);
-      }, 700);
+        }, 2600);
+      };
+
+      // Brief reaction beat before talking (600ms per §10)
+      setTimeout(proceedToRoastTalking, 600);
     } catch (err: unknown) {
       console.error("Failed to send message to /api/roast:", err);
 
-      // Safe fallback state on unexpected fetch errors
       set({
         isGenerating: false,
+        isSpeaking: false,
         characterState: "IDLE_PEEKING",
         rateLimitNotice: "എന്തോ തകരാറ് പോലെ! Try sending again in a moment.",
       });
     }
   },
 
+  replayVoice: () => {
+    const last = get().lastRoast;
+    if (!last?.audio) return;
+
+    try {
+      const audio = getAudioElement();
+      if (!audio) return;
+
+      const audioSrc = last.audio.startsWith("data:")
+        ? last.audio
+        : `data:audio/wav;base64,${last.audio}`;
+
+      audio.src = audioSrc;
+      set({
+        isSpeaking: true,
+        characterState: "ROAST_TALKING",
+        emotion: last.emotion,
+        gesture: last.gesture,
+      });
+
+      audio.onended = () => {
+        set({ isSpeaking: false, characterState: "LAUGHING" });
+        setTimeout(() => {
+          set({
+            characterState: "IDLE_PEEKING",
+            emotion: "neutral",
+            gesture: "idle",
+          });
+        }, 1800);
+      };
+
+      audio.play().catch(() => {
+        set({ isSpeaking: false, characterState: "IDLE_PEEKING" });
+      });
+    } catch {
+      set({ isSpeaking: false, characterState: "IDLE_PEEKING" });
+    }
+  },
+
   resetConversation: () => {
-    // Reset control clears in-memory conversation state per §5, §19
+    try {
+      const audio = getAudioElement();
+      if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    } catch {
+      // Ignore audio stop errors
+    }
+
     set({
       sessionId: generateSessionId(),
       messages: [],
@@ -163,11 +308,25 @@ export const useAppStore = create<AppState>((set, get) => ({
       emotion: "neutral",
       gesture: "idle",
       isGenerating: false,
+      isSpeaking: false,
       rateLimitNotice: null,
     });
   },
 
-  setVoiceEnabled: (enabled: boolean) => set({ voiceEnabled: enabled }),
+  setVoiceEnabled: (enabled: boolean) => {
+    if (!enabled) {
+      try {
+        const audio = getAudioElement();
+        if (audio) audio.pause();
+      } catch {
+        // Ignore
+      }
+      set({ voiceEnabled: false, isSpeaking: false });
+    } else {
+      set({ voiceEnabled: true });
+    }
+  },
+
   setCharacterState: (state: CharacterState) => set({ characterState: state }),
   clearRateLimitNotice: () => set({ rateLimitNotice: null }),
 }));

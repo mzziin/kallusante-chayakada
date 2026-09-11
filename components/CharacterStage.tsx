@@ -10,6 +10,7 @@ interface CharacterStageProps {
   gesture?: Gesture;
   isInputFocused?: boolean;
   inputTextLength?: number;
+  isSpeaking?: boolean;
 }
 
 /**
@@ -23,6 +24,7 @@ export const CharacterStage: React.FC<CharacterStageProps> = ({
   gesture = "idle",
   isInputFocused = false,
   inputTextLength = 0,
+  isSpeaking = false,
 }) => {
   // Human-readable status label in Malayalam/English
   const statusLabel =
@@ -30,8 +32,8 @@ export const CharacterStage: React.FC<CharacterStageProps> = ({
       ? "ചിന്തിക്കുന്നു... (Thinking)"
       : state === "TYPING_WATCHING"
       ? "നോക്കുന്നു... (Watching)"
-      : state === "ROAST_TALKING"
-      ? "ട്രോളുന്നു... (Roasting)"
+      : isSpeaking || state === "ROAST_TALKING"
+      ? "സംസാരിക്കുന്നു... (Roasting)"
       : state === "LAUGHING"
       ? "ചിരിക്കുന്നു (Laughing)"
       : state === "REACTING"
@@ -55,6 +57,7 @@ export const CharacterStage: React.FC<CharacterStageProps> = ({
           gesture={gesture}
           isInputFocused={isInputFocused}
           inputTextLength={inputTextLength}
+          isSpeaking={isSpeaking}
         />
       </div>
 
@@ -66,7 +69,7 @@ export const CharacterStage: React.FC<CharacterStageProps> = ({
               ? "bg-amber-400 animate-ping"
               : state === "TYPING_WATCHING"
               ? "bg-emerald-400 animate-pulse"
-              : state === "ROAST_TALKING"
+              : isSpeaking || state === "ROAST_TALKING"
               ? "bg-red-400 animate-bounce"
               : "bg-zinc-500"
           }`}

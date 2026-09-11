@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { roastRequestSchema } from "@/lib/validation";
 import { generateRoast } from "@/lib/llm";
+import { generateTtsAudio } from "@/lib/tts";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -26,10 +27,17 @@ export async function POST(request: NextRequest) {
 
     const roastPayload = validation.data;
 
-    // 2. Generate roast via LLM pipeline with retries and fallbacks
+    // 2. Generate roast via Gemini LLM pipeline
     const roastResult = await generateRoast(roastPayload);
 
-    // 3. Structured observability log per §18 (privacy-conscious: no full message logged)
+    // 3. Generate Malayalam voice audio via Sarvam TTS (§11, §11.1)
+    if (roastResult.ttsText) {
+      const audio = await generateTtsAudio(roastResult.ttsText);
+      roastResult.audio = audio;
+      roastResult.audioAvailable = Boolean(audio);
+    }
+
+    // 4. Structured observability log per §18 (privacy-conscious: no full message logged)
     const duration = Date.now() - startTime;
     console.log(
       JSON.stringify({
@@ -39,6 +47,7 @@ export async function POST(request: NextRequest) {
         emotion: roastResult.emotion,
         gesture: roastResult.gesture,
         skipRoast: roastResult.skipRoast,
+        audioAvailable: roastResult.audioAvailable,
         durationMs: duration,
       })
     );

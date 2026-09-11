@@ -19,6 +19,7 @@ export interface KalloosanCharacterProps {
   gesture?: Gesture;
   inputTextLength?: number;
   isInputFocused?: boolean;
+  isSpeaking?: boolean;
   className?: string;
 }
 
@@ -64,10 +65,12 @@ export const KalloosanCharacter: React.FC<KalloosanCharacterProps> = ({
   gesture = "idle",
   inputTextLength = 0,
   isInputFocused = false,
+  isSpeaking = false,
   className = "",
 }) => {
   const shouldReduceMotion = useReducedMotion();
   const [isBlinking, setIsBlinking] = useState(false);
+  const [talkingMouthOpen, setTalkingMouthOpen] = useState(false);
 
   // Periodic blinking loop per §3, §10
   useEffect(() => {
@@ -91,6 +94,21 @@ export const KalloosanCharacter: React.FC<KalloosanCharacterProps> = ({
     return () => clearInterval(interval);
   }, [state, isInputFocused]);
 
+  // Lip-sync talking mouth loop during ROAST_TALKING or when isSpeaking is true (§10, §11)
+  useEffect(() => {
+    if (state !== "ROAST_TALKING" && !isSpeaking) {
+      setTalkingMouthOpen(false);
+      return;
+    }
+
+    // Toggle mouth-open and mouth-closed at natural speech rhythm (~160ms)
+    const mouthInterval = setInterval(() => {
+      setTalkingMouthOpen((prev) => !prev);
+    }, 160);
+
+    return () => clearInterval(mouthInterval);
+  }, [state, isSpeaking]);
+
   // Fake eye tracking calculation per §3 & §10:
   // eyeX = (textLength % 20) - 10 -> -10px to +10px
   const eyeX = useMemo(() => {
@@ -100,8 +118,15 @@ export const KalloosanCharacter: React.FC<KalloosanCharacterProps> = ({
 
   // Resolve layer filenames matching §4's state composition table
   const layers = useMemo(() => {
-    return resolveCharacterLayers(state, emotion, gesture, isBlinking);
-  }, [state, emotion, gesture, isBlinking]);
+    const baseLayers = resolveCharacterLayers(state, emotion, gesture, isBlinking);
+
+    // Apply active talking mouth loop in ROAST_TALKING
+    if (state === "ROAST_TALKING" || isSpeaking) {
+      baseLayers.mouth = talkingMouthOpen ? "mouth-open" : "mouth-closed";
+    }
+
+    return baseLayers;
+  }, [state, emotion, gesture, isBlinking, isSpeaking, talkingMouthOpen]);
 
   // Determine motion variant keys
   const bodyVariantKey = shouldReduceMotion
@@ -118,7 +143,7 @@ export const KalloosanCharacter: React.FC<KalloosanCharacterProps> = ({
     ? "thinking"
     : state === "TYPING_WATCHING"
     ? "watching"
-    : state === "ROAST_TALKING"
+    : state === "ROAST_TALKING" || isSpeaking
     ? "roastWobble"
     : gesture === "head_shake"
     ? "head_shake"
@@ -175,7 +200,7 @@ export const KalloosanCharacter: React.FC<KalloosanCharacterProps> = ({
           </div>
         )}
 
-        {/* 4. Mouth Layer (z-40) */}
+        {/* 4. Mouth Layer (z-40) with lip-sync talking loop */}
         {layers.mouth && (
           <div className="absolute inset-0 z-40 w-full h-full">
             <CharacterLayerImage
