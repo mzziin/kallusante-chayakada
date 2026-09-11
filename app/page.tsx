@@ -17,6 +17,7 @@ export default function Home() {
     isGenerating,
     isSpeaking,
     voiceEnabled,
+    autoplayBlocked,
     rateLimitNotice,
     sendMessage,
     replayVoice,
@@ -109,6 +110,7 @@ export default function Home() {
           isSpeaking={isSpeaking}
           onReplayVoice={replayVoice}
           audioAvailable={Boolean(lastRoast?.audioAvailable)}
+          autoplayBlocked={autoplayBlocked}
         />
       </section>
 

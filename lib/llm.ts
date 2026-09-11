@@ -43,7 +43,8 @@ function cleanJsonText(rawText: string): string {
  */
 async function callGeminiRest(
   promptText: string,
-  apiKey: string
+  apiKey: string,
+  modelName: string = process.env.GEMINI_MODEL || "gemini-flash-latest"
 ): Promise<{ text?: string; finishReason?: string }> {
   const requestBody = {
     contents: [
@@ -77,7 +78,8 @@ async function callGeminiRest(
     ],
   };
 
-  const response = await fetch(GEMINI_ENDPOINT, {
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
+  const response = await fetch(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -174,12 +176,21 @@ export async function generateRoast(request: RoastRequest): Promise<RoastRespons
     );
   }
 
-  // Attempt 2: Retry once per §15 with 300ms delay and stricter JSON instruction
+  // Attempt 2: Retry once per §15 with 300ms delay, failover model, and stricter JSON instruction
   await new Promise((resolve) => setTimeout(resolve, 300));
 
   try {
     const reinforcedPrompt = `${prompt}\n\nIMPORTANT REMINDER: You MUST return ONLY valid, parseable JSON. Do not include markdown code fences, comments, or additional text outside the JSON object.`;
-    const { text, finishReason } = await callGeminiRest(reinforcedPrompt, apiKey);
+    const failoverModel =
+      process.env.GEMINI_MODEL === "gemini-2.5-flash-lite"
+        ? "gemini-flash-latest"
+        : "gemini-2.5-flash-lite";
+
+    const { text, finishReason } = await callGeminiRest(
+      reinforcedPrompt,
+      apiKey,
+      failoverModel
+    );
 
     if (finishReason && finishReason !== "STOP" && finishReason !== "MAX_TOKENS") {
       return FALLBACK_ROAST;

@@ -23,6 +23,7 @@ export interface AppState {
   isGenerating: boolean;
   isSpeaking: boolean;
   voiceEnabled: boolean;
+  autoplayBlocked: boolean;
   rateLimitNotice: string | null;
 
   // Actions
@@ -34,6 +35,10 @@ export interface AppState {
   setCharacterState: (state: CharacterState) => void;
   clearRateLimitNotice: () => void;
 }
+
+// 0.05-second silent 16-bit PCM WAV for priming audio playback on user gesture
+const SILENT_WAV_DATA_URI =
+  "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
 
 // Module-level audio element reference for autoplay priming (§11)
 let primedAudioElement: HTMLAudioElement | null = null;
@@ -60,20 +65,32 @@ export const useAppStore = create<AppState>((set, get) => ({
   isGenerating: false,
   isSpeaking: false,
   voiceEnabled: true,
+  autoplayBlocked: false,
   rateLimitNotice: null,
 
   /**
    * Prime browser audio element during user submit event to satisfy
-   * Mobile Safari and Android autoplay restrictions (§11)
+   * Mobile Safari, Chrome, and Android autoplay restrictions (§11)
    */
   primeAudio: () => {
     try {
       const audio = getAudioElement();
       if (audio) {
-        audio.load();
+        audio.src = SILENT_WAV_DATA_URI;
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              audio.pause();
+              audio.currentTime = 0;
+            })
+            .catch(() => {
+              // Expected if browser requires direct user interaction or ignores priming
+            });
+        }
       }
     } catch {
-      // Best-effort priming; fail silently per §11
+      // Best-effort priming; fail silently
     }
   },
 
@@ -94,6 +111,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       isGenerating: true,
       characterState: "THINKING",
       isSpeaking: false,
+      autoplayBlocked: false,
       rateLimitNotice: null,
     });
 
@@ -174,6 +192,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                 set({
                   isSpeaking: true,
                   characterState: "ROAST_TALKING",
+                  autoplayBlocked: false,
                 });
               };
 
@@ -190,21 +209,28 @@ export const useAppStore = create<AppState>((set, get) => ({
                 }, 1800);
               };
 
-              audio.onerror = () => {
-                // Fail silently into text-only animation path (§11, §15)
+              audio.onerror = (e) => {
+                console.warn("[Voice] Audio playback element error:", e);
                 runTextFallbackTalkingLifecycle();
               };
 
               const playPromise = audio.play();
               if (playPromise !== undefined) {
-                playPromise.catch(() => {
-                  // Autoplay restriction or decode failure; fail silently into fallback
-                  runTextFallbackTalkingLifecycle();
-                });
+                playPromise
+                  .then(() => {
+                    set({ autoplayBlocked: false });
+                  })
+                  .catch((err) => {
+                    console.warn("[Voice] Autoplay was blocked by browser policy:", err);
+                    set({ autoplayBlocked: true });
+                    runTextFallbackTalkingLifecycle();
+                  });
               }
               return;
             }
-          } catch {
+          } catch (err) {
+            console.warn("[Voice] Playback invocation failed:", err);
+            set({ autoplayBlocked: true });
             runTextFallbackTalkingLifecycle();
             return;
           }
@@ -262,6 +288,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       audio.src = audioSrc;
       set({
+        autoplayBlocked: false,
         isSpeaking: true,
         characterState: "ROAST_TALKING",
         emotion: last.emotion,
@@ -279,7 +306,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         }, 1800);
       };
 
-      audio.play().catch(() => {
+      audio.play().catch((err) => {
+        console.warn("[Voice] Replay failed:", err);
         set({ isSpeaking: false, characterState: "IDLE_PEEKING" });
       });
     } catch {
@@ -309,6 +337,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       gesture: "idle",
       isGenerating: false,
       isSpeaking: false,
+      autoplayBlocked: false,
       rateLimitNotice: null,
     });
   },

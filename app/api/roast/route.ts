@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     // 2. Generate roast via Gemini LLM pipeline
     const roastResult = await generateRoast(roastPayload);
 
-    // 3. Generate Malayalam voice audio via Sarvam TTS (§11, §11.1)
+    // 3. Generate Malayalam voice audio via Gemini TTS (§11, §11.1)
     if (roastResult.ttsText) {
       const audio = await generateTtsAudio(roastResult.ttsText);
       roastResult.audio = audio;

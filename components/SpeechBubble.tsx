@@ -10,6 +10,7 @@ interface SpeechBubbleProps {
   isSpeaking?: boolean;
   onReplayVoice?: () => void;
   audioAvailable?: boolean;
+  autoplayBlocked?: boolean;
 }
 
 /**
@@ -26,6 +27,7 @@ export const SpeechBubble: React.FC<SpeechBubbleProps> = ({
   isSpeaking = false,
   onReplayVoice,
   audioAvailable = false,
+  autoplayBlocked = false,
 }) => {
   return (
     <div
@@ -80,11 +82,12 @@ export const SpeechBubble: React.FC<SpeechBubbleProps> = ({
                   type="button"
                   onClick={onReplayVoice}
                   disabled={isSpeaking}
-                  aria-label="Replay roast voice"
-                  title="Replay voice audio"
-                  className="p-1 rounded-md text-zinc-400 hover:text-chai-300 hover:bg-zinc-800 transition-colors focus-visible:ring-2 focus-visible:ring-chai-400"
+                  aria-label="Play or replay roast voice"
+                  title="Play or replay roast voice"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-300 hover:text-amber-100 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-chai-400"
                 >
-                  <span aria-hidden="true">🔁</span>
+                  <span aria-hidden="true">🔊</span>
+                  <span>{isSpeaking ? "കേൾക്കുന്നു..." : "ശബ്ദം"}</span>
                 </button>
               )}
             </div>
@@ -94,6 +97,22 @@ export const SpeechBubble: React.FC<SpeechBubbleProps> = ({
           <blockquote className="text-base sm:text-lg font-medium leading-relaxed text-zinc-100 selection:bg-chai-500/40">
             &ldquo;{response}&rdquo;
           </blockquote>
+
+          {/* Autoplay blocked fallback callout */}
+          {autoplayBlocked && audioAvailable && onReplayVoice && (
+            <div className="mt-3 pt-3 border-t border-zinc-800 flex items-center justify-between gap-2 animate-fadeIn">
+              <span className="text-xs text-amber-300/90 flex items-center gap-1.5">
+                <span aria-hidden="true">🔈</span> ബ്രൗസർ സൗണ്ട് തടഞ്ഞു (Tap to hear):
+              </span>
+              <button
+                type="button"
+                onClick={onReplayVoice}
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-500 to-chai-500 hover:from-amber-400 hover:to-chai-400 text-zinc-950 font-bold text-xs shadow-md transition-all active:scale-95 animate-pulse"
+              >
+                <span aria-hidden="true">▶️</span> ശബ്ദം കേൾക്കൂ
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         /* Welcome / Initial Prompt */

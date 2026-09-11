@@ -12,7 +12,7 @@ A satirical web application featuring **Kalloosan**, an original fictional Kotta
 - **Layered 2D Composite Character Rig:** Composed of independently animated layers (`body`, `head`, `eyes`, `eyebrows`, `mouth`, `arms`, `accessories`) animated using Framer Motion transforms.
 - **Fake Eye-Tracking Engine:** Eyes track your typing horizontal length in real time (`eyeX = (textLength % 20) - 10`).
 - **Comedic AI Roast Brain:** Powered by Gemini 2.5 Flash via direct REST `fetch` with Kottayam slang, Kerala cultural references, and prompt-level distress mitigation (`skipRoast`).
-- **Malayalam Voice & Lip-Sync:** Sarvam AI Bulbul v2 Text-to-Speech with natural talking mouth loops and autoplay gesture priming for mobile devices.
+- **Malayalam Voice & Lip-Sync:** Google Gemini Multimodal Text-to-Speech (with PCM-to-WAV packaging) delivering animated talking mouth loops and silent audio pulse autoplay priming for mobile devices.
 - **Strict In-Memory Session Architecture:** Zero IndexedDB, zero databases, and zero cookies. Every session is fresh; conversation state resets cleanly on reload or New Chat.
 - **Edge Rate Limiting:** Enforced via Next.js Edge Middleware ahead of API routes (10 req/min/IP backed by Upstash Redis with local memory fallback).
 - **Accessible & Screen-Reader Ready:** High-contrast DOM text with `aria-live="polite"`, decorative graphics marked `aria-hidden="true"`, visible keyboard focus states, and native `prefers-reduced-motion` adaptability.
@@ -39,7 +39,7 @@ A satirical web application featuring **Kalloosan**, an original fictional Kotta
   ├── Client-side & Server-side 300-char input validation
   ├── Context Manager (sliding-window bounded context)
   ├── Gemini 2.5 Flash REST API (safety-configured, retry-once, fallback)
-  └── Sarvam AI TTS REST API (Malayalam speech, retry-once, fallback)
+  └── Gemini Multimodal TTS REST API (Malayalam speech, PCM-to-WAV, retry-once, fallback)
 ```
 
 ---
@@ -87,11 +87,9 @@ cp .env.example .env.local
 ```
 
 ```env
-# Google Gemini API
+# Google Gemini API (Powers both Roasts & TTS Voice)
 GEMINI_API_KEY=your_gemini_api_key_here
-
-# Sarvam AI TTS API
-SARVAM_API_KEY=your_sarvam_api_key_here
+GEMINI_VOICE=Puck
 
 # Upstash Redis for Edge Rate Limiting
 UPSTASH_REDIS_REST_URL=https://your-database.upstash.io
