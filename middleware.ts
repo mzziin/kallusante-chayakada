@@ -18,6 +18,16 @@ export async function middleware(request: NextRequest) {
   if (!rateLimit.success) {
     const retryAfterSeconds = Math.max(rateLimit.reset, 1);
 
+    // Structured observability log for rate-limit trigger per §18
+    console.warn(
+      JSON.stringify({
+        tag: "RATE_LIMIT_BLOCKED",
+        clientIpPrefix: clientIp.split(".").slice(0, 2).join(".") + ".*.*",
+        retryAfterSeconds,
+        limit: rateLimit.limit,
+      })
+    );
+
     // Return structured rate-limit response per §12, §13
     return NextResponse.json(
       {

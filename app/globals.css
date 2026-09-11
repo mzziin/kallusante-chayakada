@@ -7,6 +7,12 @@
   --font-outfit: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+html {
+  /* Prevent pull-to-refresh reload jitters on mobile browsers (§16) */
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   color: #f4f4f5;
   background-color: #0c0e0d;
@@ -18,6 +24,11 @@ body {
     radial-gradient(circle at 10% 90%, rgba(22, 101, 52, 0.07) 0%, transparent 45%),
     radial-gradient(circle at 90% 85%, rgba(180, 83, 9, 0.06) 0%, transparent 45%);
   background-attachment: fixed;
+}
+
+/* Fast tap response on mobile touch devices */
+button, input, textarea {
+  touch-action: manipulation;
 }
 
 /* Kerala subtle silhouette overlay */
@@ -32,7 +43,7 @@ body {
   z-index: 0;
 }
 
-/* Custom scrollbar for chat / text areas */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -48,7 +59,7 @@ body {
   background: rgba(245, 158, 11, 0.5);
 }
 
-/* Reduced motion preference */
+/* Reduced motion preference (§10, §17) */
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

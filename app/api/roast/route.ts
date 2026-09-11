@@ -3,6 +3,7 @@ import { roastRequestSchema } from "@/lib/validation";
 import { generateRoast } from "@/lib/llm";
 import { generateTtsAudio } from "@/lib/tts";
 
+// Serverless Node.js runtime and 30-second execution budget per §22
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
@@ -16,6 +17,15 @@ export async function POST(request: NextRequest) {
     const validation = roastRequestSchema.safeParse(body);
     if (!validation.success) {
       const issue = validation.error.issues[0]?.message || "Invalid request payload";
+
+      console.warn(
+        JSON.stringify({
+          tag: "ROAST_REQUEST_VALIDATION_FAILED",
+          error: issue,
+          durationMs: Date.now() - startTime,
+        })
+      );
+
       return NextResponse.json(
         {
           error: "invalid_request",
