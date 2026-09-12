@@ -1,142 +1,175 @@
-# ☕ Kalloosante Chayakkada (കല്ലൂസന്റെ ചായക്കട)
+<img width="1280" height="640" alt="Kalloosante Chayakkada" src="https://github.com/user-attachments/assets/8920b256-2ba8-4988-b824-5351134eb4bd" />
 
-> **"A funny Malayali character who has made it his life's mission to explain why whatever you just said is probably a bad idea."**
+# Kalloosante Chayakkada 🎯
 
-A satirical web application featuring **Kalloosan**, an original fictional Kottayam tea-shop guy sitting on a wooden bench at a Kerala chayakkada who finds the hilarious negative angle, hidden liability, and practical drawback in ANY achievement, purchase, or plan you share.
+## Basic Details
 
----
+### Team Name: Kalloosante Chayakkada
 
-## 🌟 Features
+### Team Members
 
-- **Character-Centric UI Shell:** Snapchat-style vertically centered input with Kalloosan peeking from behind the chatbox.
-- **Layered 2D Composite Character Rig:** Composed of independently animated layers (`body`, `head`, `eyes`, `eyebrows`, `mouth`, `arms`, `accessories`) animated using Framer Motion transforms.
-- **Fake Eye-Tracking Engine:** Eyes track your typing horizontal character count in real time (`eyeX = (textLength % 20) - 10`).
-- **Counter-Negative Roast Engine (Groq LPU):** Powered by Groq Cloud (`qwen/qwen3.8-27b` with `qwen/qwen3.6-27b` failover) delivering sub-second (~700ms–1.2s) inference with authentic Central Travancore / Kottayam dialect.
-- **100% Authentic Malayalam Script:** Roasts are rendered directly in beautiful Malayalam script (മലയാളം ലിപി) rather than Latin Manglish.
-- **Drawback & Risk Pinpointing:** Identifies realistic, specific inconveniences (freezing cold in Kashmir, potholed roads for sports cars, vet bills for pets, building rent for business plans).
-- **Distress & Safety Guardrails:** Automatically detects genuine emotional distress or self-harm and switches to caring, gentle words (`skipRoast: true`).
-- **Strict In-Memory Session Architecture:** Zero IndexedDB, zero databases, and zero cookies. Every session is fresh; conversation state resets cleanly on reload or New Chat.
-- **Edge Rate Limiting:** Enforced via Next.js Edge Middleware ahead of API routes (10 req/min/IP backed by Upstash Redis with local memory fallback).
-- **Accessible & Screen-Reader Ready:** High-contrast DOM text with `aria-live="polite"`, decorative graphics marked `aria-hidden="true"`, visible keyboard focus states, and native `prefers-reduced-motion` adaptability.
+- Team Lead: Mohammed Mazin Cheriyan - TKM College of Engineering
+- Member 2: Abhaj Khan - TKM College of Engineering
 
----
+### Project Description
 
-## 🏗️ Architecture & Philosophy
+Kalloosante Chayakkada is a playful AI roast bot for Malayali users. Share an idea, plan, or good news and Kalloosan, an original fictional Kottayam-style tea-shop character, finds the negative angle and delivers a short, friendly roast in Malayalam script.
 
-```text
-[User Browser - Next.js 14 / React 18]
-  │
-  ├── In-memory Zustand Store (zero persistence / zero IndexedDB)
-  ├── 2D Layered Composite Character (Framer Motion)
-  ├── Eye-tracking + Background Ambience Graphics
-  │
-  │ POST /api/roast { currentMessage, currentTopic, historySummary, recentMessages }
-  ▼
-[Edge Middleware - middleware.ts]
-  │
-  ├── 10 requests / minute per IP rate limit (Upstash Redis)
-  ▼
-[Next.js API Route - app/api/roast/route.ts (Node.js runtime)]
-  │
-  ├── Client-side & Server-side 300-char input validation
-  ├── Context Manager (sliding-window bounded context + counter-negative rules)
-  └── Groq Cloud Chat Completion API (qwen/qwen3.8-27b, native JSON mode, retry-once)
-```
+The app reacts as the user types, preserves lightweight conversation context during the current page session, and animates a layered 2D character through each interaction.
 
----
+### The Problem (that doesn't exist)
 
-## 🎨 2D Character Layer Guide for Artists
+People have somehow become capable of saying positive things about their lives without immediately being reminded why those things might be a terrible idea.
 
-All layered WebP assets are exported onto an **identical canvas dimension (matching 800×600 aspect ratio)** with transparent backgrounds so they naturally align at `top: 0, left: 0`:
+Bought a new car? Petrol is expensive. Planning a trip? Money is about to disappear. Got a promotion? Congratulations, now you have more work. Humanity clearly needed an AI dedicated to finding the downside.
 
-| Layer Directory | File Name | Description |
-|---|---|---|
-| `public/character/body/` | `body-idle.webp` | Peeking pose mostly hidden behind input |
-| | `body-standing.webp` | Full stand-up pose for roasting/laughing |
-| `public/character/head/` | `head-peeking.webp` | Only top of head and eyes visible |
-| | `head-full.webp` | Full head used when standing |
-| `public/character/eyes/` | `eyes-open.webp` | Open eyes (default) |
-| | `eyes-closed.webp` | Closed eyes (blink loop / laugh) |
-| | `eyes-narrow.webp` | Skeptical / thinking eyes |
-| `public/character/eyebrows/` | `eyebrows-neutral.webp`| Neutral resting eyebrows |
-| | `eyebrows-raised.webp` | Raised eyebrows for typing watching |
-| | `eyebrows-furrowed.webp`| Annoyed / skeptical eyebrows |
-| `public/character/mouth/` | `mouth-closed.webp` | Closed mouth |
-| | `mouth-open.webp` | Open mouth frame for talking loop |
-| | `mouth-smirk.webp` | Smirking idle / reacting frame |
-| | `mouth-laugh.webp` | Laughing mouth frame |
-| `public/character/arms/` | `arms-hidden.webp` | Not rendered while peeking |
-| | `arms-neutral.webp` | Neutral arms position |
-| | `arms-shrug.webp` | Shrugging gesture |
-| | `arms-facepalm.webp` | Facepalm gesture |
-| | `arms-point.webp` | Pointing gesture |
-| | `arms-cross.webp` | Crossed arms |
-| `public/character/accessories/` | `moustache.webp` | Kottayam-style moustache |
+### The Solution (that nobody asked for)
 
----
+Meet Kalloosan: an overconfident, slightly jealous tea-shop character who turns everyday updates into short, friendly roasts. The app uses an LLM to generate Malayalam-script counter-negative responses, then maps each response to an emotion and gesture for the animated character.
 
-## 🚀 Getting Started
+Kalloosan is an original fictional character, not an imitation of any real person. The experience is comedy rather than advice, and messages indicating genuine distress can follow a `skipRoast` path.
 
-### 1. Prerequisites
-- Node.js 18+ or 20+ (Node v24 supported)
-- npm 10+
+## Technical Details
 
-### 2. Environment Variables
-Copy `.env.example` to `.env.local` and add your API keys:
+### Technologies/Components Used
+
+For Software:
+
+- Language: TypeScript
+- Framework: Next.js 14 App Router with React 18
+- Styling: Tailwind CSS
+- Animation: Framer Motion
+- State management: Zustand, with in-memory session state
+- Validation: Zod
+- AI roast generation: Groq REST API
+- Active model: `qwen/qwen3.8-27b`
+- Failover model: `qwen/qwen3.6-27b`
+- Optional text-to-speech: Gemini TTS API, disabled by default
+- Rate limiting: Upstash Redis and `@upstash/ratelimit`, with an in-memory local fallback
+- Deployment target: Vercel
+
+For Hardware:
+
+- No dedicated hardware is required.
+- The app is designed for modern mobile and desktop browsers, including low-end Android devices.
+
+### Implementation
+
+For Software:
+
+# Installation
+
 ```bash
-cp .env.example .env.local
+git clone https://github.com/mzziin/kallusante-chayakada.git
+cd kallusante-chayakada
+npm install
 ```
+
+Create `.env.local` in the project root:
 
 ```env
-# Groq Cloud API Key (Powers ultra-fast LPU comedic roast generation)
+# Required for generated roasts
 GROQ_API_KEY=gsk_your_groq_api_key_here
-
-# Groq Model (Default: "qwen/qwen3.8-27b", fallback: "qwen/qwen3.6-27b")
 GROQ_MODEL=qwen/qwen3.8-27b
 
-# Upstash Redis for Edge Rate Limiting (10 req/min/IP)
-UPSTASH_REDIS_REST_URL=https://your-database.upstash.io
-UPSTASH_REDIS_REST_TOKEN=your_upstash_rest_token_here
+# Optional in local development; otherwise an in-memory limiter is used
+UPSTASH_REDIS_REST_URL=https://your-instance.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your_upstash_token
+
+# Optional voice output; disabled unless explicitly set to true
+ENABLE_TTS=false
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_TTS_MODEL=gemini-2.5-flash-preview-tts
+GEMINI_VOICE=Puck
 ```
 
-*Note: If API keys are omitted in development, Kalloosan automatically uses safe hardcoded Malayalam comedic fallbacks and local memory rate limiting without crashing.*
+Never commit `.env.local` or real API credentials.
 
-### 3. Install & Run
+# Run
+
 ```bash
-# Install dependencies
-npm install
-
-# Start development server
 npm run dev
+```
 
-# Run verification suite
+Open [http://localhost:3000](http://localhost:3000).
+
+For production verification:
+
+```bash
 npm run typecheck
 npm run lint
 npm run build
-
-# Start production server
-npm run start
+npm start
 ```
 
+### Project Documentation
+
+For Software:
+
+# Screenshots
+
+![Kalloosan idle and peeking](screenshots/idle-peeking.png)
+
+_Kalloosan peeks from behind the chat input in the default idle state._
+
+![Kalloosan speaking](screenshots/speaking.png)
+
+_Kalloosan stands up and delivers the generated roast with an animated reaction._
+
+> Two application screenshots are currently included in the repository. A third screenshot can be added to `screenshots/` when another captured state is available.
+
+# Diagrams
+
+```text
+Browser UI
+  |
+  +-- Zustand in-memory session state
+  +-- Layered character and eye-tracking animation
+  +-- Current roast speech bubble
+  |
+  +-- POST /api/roast
+          |
+          +-- Middleware: IP rate limit
+          +-- Zod request validation
+          +-- Context construction
+          +-- Groq roast generation and schema validation
+          +-- Optional Gemini TTS
+          |
+          +-- Structured roast response
+```
+
+_The browser sends a bounded conversation request to the Next.js API. Middleware applies IP rate limiting, the API validates the input, Groq generates a structured roast, and the response drives the character and speech bubble._
+
+For Hardware:
+
+# Schematic & Circuit
+
+Not applicable. Kalloosante Chayakkada is a software-only project.
+
+# Build Photos
+
+Not applicable. No physical hardware is used.
+
+### Project Demo
+
+# Video
+
+Demo video link: Not published yet.
+
+_The planned demo shows typing, Kalloosan's watching state, roast generation, the character reaction, speech bubble output, and the return to the peeking state._
+
+# Additional Demos
+
+- [Source repository](https://github.com/mzziin/kallusante-chayakada)
+
+## Team Contributions
+
+- Mohammed Mazin Cheriyan: Project architecture, Groq integration, prompt design, structured response validation, rate limiting, and optional TTS pipeline.
+- Abhaj Khan: UI/UX implementation, layered character presentation, interaction polish, screenshots, and documentation.
+
 ---
 
-## 🧪 QA & Smoke-Test Checklist (§26)
+Made with ❤️ at TinkerHub Useless Projects
 
-- [x] Fresh page load shows `IDLE_PEEKING`, empty input, and zero residual state.
-- [x] Typing triggers `TYPING_WATCHING`; submitting triggers `THINKING`.
-- [x] Counter-negative roasts are generated in authentic spoken Malayalam script (മലയാളം ലിപി).
-- [x] Specific practical drawbacks, risks, and hidden costs are pinpointed for each statement.
-- [x] Off-topic tangents are teased and redirected back to the topic.
-- [x] 300-character input limit is strictly enforced client-side and server-side.
-- [x] Rate limiting triggers HTTP 429 on the 11th rapid request per minute from one IP.
-- [x] Missing API keys or network errors fall back to safe Malayalam roasts without 500 errors.
-- [x] Reset control clears conversation and returns character to `IDLE_PEEKING`.
-- [x] `prefers-reduced-motion` suppresses continuous bounce and wobble loops.
-- [x] Screen readers announce incoming roasts via `aria-live="polite"`.
-- [x] Zero API keys or secrets exposed in client bundles.
-
----
-
-## 📜 Disclaimer
-
-> **തമാശ മാത്രം:** കല്ലൂസൻ ഒരു സാങ്കൽപ്പിക ഹാസ്യ കഥാപാത്രമാണ്. കാര്യങ്ങൾ തമാശയായി മാത്രം കാണുക. (Kalloosan is a fictional comedy character. His job is to find the comedic downside of your ideas. Don't take the negativity seriously.)
+![Static Badge](https://img.shields.io/badge/TinkerHub-24?color=%23000000&link=https%3A%2F%2Fwww.tinkerhub.org%2F)
+![Static Badge](https://img.shields.io/badge/UselessProjects--26-26?link=https%3A%2F%2Ftinkerhub.org%2Fevents%2F1M8ORET9A1%2Fuseless-projects-3.0)
