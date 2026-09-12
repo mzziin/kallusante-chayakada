@@ -7,11 +7,11 @@ import {
 } from "./validation";
 
 /**
- * Hardcoded safe fallback roast verbatim per §15
+ * Hardcoded safe fallback roast verbatim per §15 in natural Malayalam script
  */
 export const FALLBACK_ROAST: RoastResponse = {
-  response: "എന്റെ പൊന്നേടാവേ, തലക്ക് വേറെ പണിയുണ്ട്. ഒന്ന് പിന്നെ നോക്കാം. ഹഹ്!",
-  ttsText: "എന്റെ പൊന്നേടാവേ, തലക്ക് വേറെ പണിയുണ്ട്. ഒന്ന് പിന്നെ നോക്കാം. ഹഹ്!",
+  response: "എന്റെ പൊന്നേടാവേ, വേറെ പണിയുണ്ട്. ഒന്ന് പോയേ. ഹഹ്!",
+  ttsText: "എന്റെ പൊന്നേടാവേ, വേറെ പണിയുണ്ട്. ഒന്ന് പോയേ. ഹഹ്!",
   related: true,
   topic: "General",
   emotion: "skeptical",
@@ -21,9 +21,8 @@ export const FALLBACK_ROAST: RoastResponse = {
   audioAvailable: false,
 };
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash";
-const GEMINI_ENDPOINT =
-  `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
 
 /**
  * Strip potential markdown code fences from model text
@@ -39,66 +38,45 @@ function cleanJsonText(rawText: string): string {
 }
 
 /**
- * Perform single REST call to Gemini 2.5 Flash API per §7.1
+ * Perform single REST call to Groq Cloud Chat Completion API
  */
-async function callGeminiRest(
+async function callGroqRest(
   promptText: string,
   apiKey: string,
-  modelName: string = process.env.GEMINI_MODEL || "gemini-3.5-flash"
-): Promise<{ text?: string; finishReason?: string }> {
+  modelName: string = GROQ_MODEL
+): Promise<{ text?: string }> {
   const requestBody = {
-    contents: [
+    model: modelName,
+    messages: [
       {
         role: "user",
-        parts: [{ text: promptText }],
+        content: promptText,
       },
     ],
-    generationConfig: {
-      temperature: 0.9,
-      maxOutputTokens: 1024,
-      responseMimeType: "application/json",
-    },
-    safetySettings: [
-      {
-        category: "HARM_CATEGORY_HARASSMENT",
-        threshold: "BLOCK_MEDIUM_AND_ABOVE",
-      },
-      {
-        category: "HARM_CATEGORY_HATE_SPEECH",
-        threshold: "BLOCK_MEDIUM_AND_ABOVE",
-      },
-      {
-        category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-        threshold: "BLOCK_MEDIUM_AND_ABOVE",
-      },
-      {
-        category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-        threshold: "BLOCK_MEDIUM_AND_ABOVE",
-      },
-    ],
+    temperature: 0.85,
+    max_tokens: 1024,
+    response_format: { type: "json_object" },
   };
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
-  const response = await fetch(endpoint, {
+  const response = await fetch(GROQ_ENDPOINT, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-goog-api-key": apiKey,
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => "");
-    throw new Error(`Gemini HTTP ${response.status}: ${errorText.slice(0, 200)}`);
+    throw new Error(`Groq HTTP ${response.status}: ${errorText.slice(0, 200)}`);
   }
 
   const data = await response.json();
-  const candidate = data.candidates?.[0];
-  const finishReason = candidate?.finishReason;
-  const partText = candidate?.content?.parts?.[0]?.text;
+  const choice = data.choices?.[0];
+  const partText = choice?.message?.content;
 
-  return { text: partText, finishReason };
+  return { text: partText };
 }
 
 /**
@@ -127,16 +105,16 @@ function parseAndValidateLlmJson(rawText: string): RoastResponse | null {
 }
 
 /**
- * Generate a comedic roast using Gemini 2.5 Flash with retry-once and fallback policies (§15)
+ * Generate a comedic roast using Groq with retry-once and fallback policies (§15)
  */
 export async function generateRoast(request: RoastRequest): Promise<RoastResponse> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
 
   if (!apiKey) {
     console.warn(
       JSON.stringify({
         tag: "LLM_CONFIG_WARNING",
-        message: "GEMINI_API_KEY is not set. Using fallback roast.",
+        message: "GROQ_API_KEY is not set. Using fallback roast.",
       })
     );
     return FALLBACK_ROAST;
@@ -144,21 +122,9 @@ export async function generateRoast(request: RoastRequest): Promise<RoastRespons
 
   const prompt = buildPrompt(request);
 
-  // Attempt 1: Main Gemini Call
+  // Attempt 1: Main Groq Call
   try {
-    const { text, finishReason } = await callGeminiRest(prompt, apiKey);
-
-    // Check for safety block per §9, §14
-    if (finishReason && finishReason !== "STOP" && finishReason !== "MAX_TOKENS") {
-      console.warn(
-        JSON.stringify({
-          tag: "LLM_SAFETY_BLOCK",
-          finishReason,
-          message: "Response blocked by safety filters. Using fallback roast.",
-        })
-      );
-      return FALLBACK_ROAST;
-    }
+    const { text } = await callGroqRest(prompt, apiKey, GROQ_MODEL);
 
     if (text) {
       const parsedResponse = parseAndValidateLlmJson(text);
@@ -176,25 +142,21 @@ export async function generateRoast(request: RoastRequest): Promise<RoastRespons
     );
   }
 
-  // Attempt 2: Retry once per §15 with 300ms delay, failover model, and stricter JSON instruction
+  // Attempt 2: Retry once per §15 with 300ms delay, failover model, and reinforced JSON instruction
   await new Promise((resolve) => setTimeout(resolve, 300));
 
   try {
-    const reinforcedPrompt = `${prompt}\n\nIMPORTANT REMINDER: You MUST return ONLY valid, parseable JSON. Do not include markdown code fences, comments, or additional text outside the JSON object.`;
+    const reinforcedPrompt = `${prompt}\n\nIMPORTANT: Return ONLY valid, parseable JSON strictly matching the requested schema.`;
     const failoverModel =
-      process.env.GEMINI_MODEL === "gemini-3.6-flash"
-        ? "gemini-3.5-flash"
-        : "gemini-3.6-flash";
+      GROQ_MODEL === "llama-3.1-8b-instant"
+        ? "llama-3.3-70b-versatile"
+        : "llama-3.1-8b-instant";
 
-    const { text, finishReason } = await callGeminiRest(
+    const { text } = await callGroqRest(
       reinforcedPrompt,
       apiKey,
       failoverModel
     );
-
-    if (finishReason && finishReason !== "STOP" && finishReason !== "MAX_TOKENS") {
-      return FALLBACK_ROAST;
-    }
 
     if (text) {
       const retryParsed = parseAndValidateLlmJson(text);
