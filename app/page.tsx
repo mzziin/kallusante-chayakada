@@ -5,6 +5,7 @@ import { Controls } from "@/components/Controls";
 import { CharacterStage } from "@/components/CharacterStage";
 import { ChatInput } from "@/components/ChatInput";
 import { SpeechBubble } from "@/components/SpeechBubble";
+import { BackgroundGraphics } from "@/components/BackgroundGraphics";
 import { useAppStore } from "@/store/useAppStore";
 
 export default function Home() {
@@ -50,6 +51,9 @@ export default function Home() {
 
   return (
     <main className="min-h-screen flex flex-col justify-between relative overflow-x-hidden">
+      {/* Animated Kerala Countryside Ambiance Background */}
+      <BackgroundGraphics />
+
       {/* Top Navigation & Controls */}
       <Controls
         voiceEnabled={voiceEnabled}
@@ -59,7 +63,7 @@ export default function Home() {
       />
 
       {/* Hero Section: Centered Character + Input + Speech Bubble */}
-      <section className="flex-1 flex flex-col justify-center items-center px-4 py-6 max-w-2xl mx-auto w-full">
+      <section className="flex-1 flex flex-col justify-center items-center px-4 py-6 max-w-2xl mx-auto w-full z-10">
         {/* Character Stage (Positioned behind & above the input box) */}
         <CharacterStage
           state={characterState}
@@ -74,9 +78,9 @@ export default function Home() {
         {rateLimitNotice && (
           <div
             role="alert"
-            className="w-full max-w-xl mx-auto mb-3 px-4 py-2.5 rounded-xl bg-amber-950/80 border border-amber-600/60 text-amber-200 text-xs sm:text-sm flex items-center justify-between shadow-lg backdrop-blur-md animate-fadeIn z-20"
+            className="w-full max-w-xl mx-auto mb-3 px-4 py-2.5 rounded-2xl bg-amber-950/90 border border-amber-500/60 text-amber-200 text-xs sm:text-sm flex items-center justify-between shadow-2xl backdrop-blur-xl animate-fadeIn z-30"
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 font-malayalam">
               <span className="text-base" aria-hidden="true">
                 ⏳
               </span>
@@ -86,7 +90,7 @@ export default function Home() {
               type="button"
               onClick={clearRateLimitNotice}
               aria-label="Dismiss notification"
-              className="text-amber-400 hover:text-amber-100 text-xs font-bold px-1.5 py-0.5 rounded transition-colors"
+              className="text-amber-400 hover:text-amber-100 text-xs font-bold px-2 py-1 rounded-lg bg-amber-900/50 hover:bg-amber-800/80 transition-colors"
             >
               ✕
             </button>
@@ -115,11 +119,10 @@ export default function Home() {
       </section>
 
       {/* Satire & Comedy Disclaimer (§20) */}
-      <footer className="w-full max-w-xl mx-auto px-4 py-4 text-center">
-        <p className="text-[11px] sm:text-xs text-zinc-500 leading-relaxed border-t border-zinc-900 pt-3">
-          <span className="font-semibold text-zinc-400">തമാശ മാത്രം: </span>
-          Kalloosan is a fictional comedy character. His job is to find the worst
-          possible side of your ideas. Don&apos;t take the negativity seriously.
+      <footer className="w-full max-w-xl mx-auto px-4 py-4 text-center z-10">
+        <p className="font-malayalam text-[11px] sm:text-xs text-zinc-400 leading-relaxed border-t border-amber-900/30 pt-3">
+          <span className="font-bold text-amber-400">തമാശ മാത്രം: </span>
+          കല്ലൂസൻ ഒരു സാങ്കൽപ്പിക ഹാസ്യ കഥാപാത്രമാണ്. കാര്യങ്ങൾ തമാശയായി മാത്രം കാണുക.
         </p>
       </footer>
     </main>
