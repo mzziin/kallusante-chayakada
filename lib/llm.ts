@@ -10,8 +10,8 @@ import {
  * Hardcoded safe fallback roast verbatim per §15
  */
 export const FALLBACK_ROAST: RoastResponse = {
-  response: "Ente ponnedave, thala vere pani ondu. Onnu pinnale nokkam. Hah!",
-  ttsText: "എന്റെ പൊന്നേടാവേ, തല വേറെ പണി ഉണ്ട്. ഒന്ന് പിന്നാലെ നോക്കാം. ഹഹ്!",
+  response: "എന്റെ പൊന്നേടാവേ, തലക്ക് വേറെ പണിയുണ്ട്. ഒന്ന് പിന്നെ നോക്കാം. ഹഹ്!",
+  ttsText: "എന്റെ പൊന്നേടാവേ, തലക്ക് വേറെ പണിയുണ്ട്. ഒന്ന് പിന്നെ നോക്കാം. ഹഹ്!",
   related: true,
   topic: "General",
   emotion: "skeptical",
@@ -21,7 +21,7 @@ export const FALLBACK_ROAST: RoastResponse = {
   audioAvailable: false,
 };
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash";
 const GEMINI_ENDPOINT =
   `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
@@ -44,7 +44,7 @@ function cleanJsonText(rawText: string): string {
 async function callGeminiRest(
   promptText: string,
   apiKey: string,
-  modelName: string = process.env.GEMINI_MODEL || "gemini-flash-latest"
+  modelName: string = process.env.GEMINI_MODEL || "gemini-3.5-flash"
 ): Promise<{ text?: string; finishReason?: string }> {
   const requestBody = {
     contents: [
@@ -182,9 +182,9 @@ export async function generateRoast(request: RoastRequest): Promise<RoastRespons
   try {
     const reinforcedPrompt = `${prompt}\n\nIMPORTANT REMINDER: You MUST return ONLY valid, parseable JSON. Do not include markdown code fences, comments, or additional text outside the JSON object.`;
     const failoverModel =
-      process.env.GEMINI_MODEL === "gemini-2.5-flash-lite"
-        ? "gemini-flash-latest"
-        : "gemini-2.5-flash-lite";
+      process.env.GEMINI_MODEL === "gemini-3.6-flash"
+        ? "gemini-3.5-flash"
+        : "gemini-3.6-flash";
 
     const { text, finishReason } = await callGeminiRest(
       reinforcedPrompt,
