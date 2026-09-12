@@ -46,23 +46,8 @@ export const CharacterStage: React.FC<CharacterStageProps> = ({
       className="relative w-full max-w-md mx-auto flex flex-col items-center justify-end pointer-events-none select-none overflow-visible"
       style={{ height: "200px", marginBottom: "-14px" }}
     >
-      {/* Warm ambient chai-shop backlight */}
-      <div className="absolute w-44 h-44 bg-gradient-to-t from-chai-500/15 via-amber-600/8 to-transparent rounded-full blur-2xl -top-2 pointer-events-none" />
-
-      {/* Layered 2D Composite Character Rig */}
-      <div className="relative w-full flex items-end justify-center">
-        <KalloosanCharacter
-          state={state}
-          emotion={emotion}
-          gesture={gesture}
-          isInputFocused={isInputFocused}
-          inputTextLength={inputTextLength}
-          isSpeaking={isSpeaking}
-        />
-      </div>
-
-      {/* Live State Badge Pill */}
-      <div className="z-30 -mt-1 mb-1 px-2.5 py-0.5 bg-zinc-950/90 border border-zinc-800/90 rounded-full text-[10px] font-medium text-chai-400 shadow-md flex items-center gap-1.5 backdrop-blur-sm">
+      {/* Live State Badge Pill placed at top-center so peeking character sits flush behind chat input */}
+      {/* <div className="absolute top-0 z-30 px-2.5 py-0.5 bg-zinc-950/90 border border-zinc-800/90 rounded-full text-[10px] font-medium text-chai-400 shadow-md flex items-center gap-1.5 backdrop-blur-sm">
         <span
           className={`w-1.5 h-1.5 rounded-full ${
             state === "THINKING"
@@ -75,6 +60,21 @@ export const CharacterStage: React.FC<CharacterStageProps> = ({
           }`}
         />
         <span>{statusLabel}</span>
+      </div> */}
+
+      {/* Warm ambient chai-shop backlight */}
+      <div className="absolute w-44 h-44 bg-gradient-to-t from-chai-500/15 via-amber-600/8 to-transparent rounded-full blur-2xl top-4 pointer-events-none" />
+
+      {/* Layered 2D Composite Character Rig */}
+      <div className="relative w-full flex items-end justify-center">
+        <KalloosanCharacter
+          state={state}
+          emotion={emotion}
+          gesture={gesture}
+          isInputFocused={isInputFocused}
+          inputTextLength={inputTextLength}
+          isSpeaking={isSpeaking}
+        />
       </div>
     </div>
   );

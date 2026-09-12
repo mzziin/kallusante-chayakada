@@ -57,22 +57,23 @@ export const GESTURE_TO_ARMS: Record<Gesture, string> = {
  * Layer composition for each character state per §4
  */
 export interface CharacterLayers {
-  body: string;
+  body: string | null;
   head: string;
   eyes: string;
   eyebrows: string;
   mouth: string | null;
   arms: string;
-  accessories?: string;
+  accessories?: string | null;
 }
 
 /**
- * Calculate fake eye tracking translation per §3 & §10:
- * eyeX = (textLength % 20) - 10 -> moves -10px to +10px
+ * Calculate smooth continuous eye tracking translation per §3 & §10:
+ * Smoothly scans back and forth between -8px and +8px as user types,
+ * avoiding sudden teleportation jumps when crossing modulo boundaries.
  */
 export function calculateEyeX(textLength: number): number {
   if (textLength <= 0) return 0;
-  return (textLength % 20) - 10;
+  return Math.round(Math.sin(textLength * 0.45) * 8);
 }
 
 /**
@@ -112,35 +113,35 @@ export function resolveCharacterLayers(
   switch (state) {
     case "IDLE_PEEKING":
       return {
-        body: "body-idle",
+        body: null,
         head: "head-peeking",
         eyes: isBlinking ? "eyes-closed" : "eyes-open",
         eyebrows: "eyebrows-neutral",
         mouth: null, // Hidden behind chatbox
-        arms: "arms-hidden",
-        accessories: "moustache",
+        arms: "arms-cross", // Peeking hands resting on input box border
+        accessories: null,
       };
 
     case "TYPING_WATCHING":
       return {
-        body: "body-idle",
+        body: null,
         head: "head-peeking",
         eyes: isBlinking ? "eyes-closed" : "eyes-open",
         eyebrows: "eyebrows-raised",
         mouth: null,
-        arms: "arms-hidden",
-        accessories: "moustache",
+        arms: "arms-cross", // Peeking hands resting on input box border
+        accessories: null,
       };
 
     case "THINKING":
       return {
-        body: "body-idle",
+        body: null,
         head: "head-peeking",
         eyes: "eyes-narrow",
         eyebrows: "eyebrows-furrowed",
-        mouth: "mouth-closed",
-        arms: "arms-neutral",
-        accessories: "moustache",
+        mouth: null,
+        arms: "arms-cross", // Peeking hands resting on input box border
+        accessories: null,
       };
 
     case "REACTING": {
@@ -184,6 +185,29 @@ export function resolveCharacterLayers(
  * Framer Motion Variants for Character Animations (§4, §10, §17)
  */
 
+// Character rig container ducking variants for peeking behind chatbox vs standing
+export const characterRigVariants: Variants = {
+  peeking: {
+    y: 86,
+    transition: { type: "spring", stiffness: 220, damping: 24 },
+  },
+  watching: {
+    y: 84,
+    transition: { type: "spring", stiffness: 220, damping: 24 },
+  },
+  thinking: {
+    y: 94,
+    transition: { type: "spring", stiffness: 220, damping: 24 },
+  },
+  standing: {
+    y: 0,
+    transition: { type: "spring", stiffness: 180, damping: 20 },
+  },
+  reduced: {
+    y: 0,
+  },
+};
+
 // Subtle breathing loop on the body layer during idle
 export const bodyBreathingVariants: Variants = {
   idle: {
@@ -195,7 +219,7 @@ export const bodyBreathingVariants: Variants = {
     },
   },
   thinking: {
-    y: 12,
+    y: 4,
     transition: {
       duration: 0.35,
       ease: "easeOut",
@@ -234,14 +258,23 @@ export const headVariants: Variants = {
     },
   },
   thinking: {
-    y: 16,
-    rotate: -4,
+    y: 4,
+    rotate: -3,
     transition: {
       duration: 0.3,
       ease: "easeOut",
     },
   },
+  standing: {
+    y: -24,
+    rotate: 0,
+    transition: {
+      duration: 0.45,
+      ease: "backOut",
+    },
+  },
   head_shake: {
+    y: -24,
     rotate: [-6, 6, -5, 5, 0],
     transition: {
       duration: 0.7,
@@ -249,7 +282,7 @@ export const headVariants: Variants = {
     },
   },
   nod: {
-    y: [0, 8, 0, 6, 0],
+    y: [-24, -16, -24, -18, -24],
     transition: {
       duration: 0.6,
       ease: "easeInOut",
@@ -278,10 +311,15 @@ export const armsVariants: Variants = {
     y: 10,
     transition: { duration: 0.2 },
   },
+  peeking: {
+    opacity: 1,
+    y: -30,
+    transition: { duration: 0.35, ease: "easeOut" },
+  },
   thinking: {
     opacity: 1,
-    y: [10, 4, 10],
-    rotate: [-3, 3, -3],
+    y: [-25, -30, -25],
+    rotate: [-2, 2, -2],
     transition: {
       duration: 1.2,
       repeat: Infinity,

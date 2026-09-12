@@ -1,5 +1,6 @@
 "use client";
 
+import { div } from "framer-motion/client";
 import React from "react";
 
 interface SpeechBubbleProps {
@@ -115,15 +116,16 @@ export const SpeechBubble: React.FC<SpeechBubbleProps> = ({
           )}
         </div>
       ) : (
+        <div></div>
         /* Welcome / Initial Prompt */
-        <div className="text-center py-2 px-4 rounded-xl bg-zinc-950/40 border border-zinc-800/40 text-zinc-400 text-xs sm:text-sm">
-          <p className="font-medium text-zinc-300">
-            എന്ത് നല്ല വാർത്തയും പറഞ്ഞോളൂ, അതിലെ ദോഷം കല്ലൂസൻ പറഞ്ഞുതരും!
-          </p>
-          <p className="text-[11px] text-zinc-500 mt-0.5">
-            (Tell me any good news, plan, or idea above...)
-          </p>
-        </div>
+        // <div className="text-center py-2 px-4 rounded-xl bg-zinc-950/40 border border-zinc-800/40 text-zinc-400 text-xs sm:text-sm">
+        //   <p className="font-medium text-zinc-300">
+        //     എന്ത് നല്ല വാർത്തയും പറഞ്ഞോളൂ, അതിലെ ദോഷം കല്ലൂസൻ പറഞ്ഞുതരും!
+        //   </p>
+        //   <p className="text-[11px] text-zinc-500 mt-0.5">
+        //     (Tell me any good news, plan, or idea above...)
+        //   </p>
+        // </div>
       )}
     </div>
   );
