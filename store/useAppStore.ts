@@ -64,7 +64,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   gesture: "idle",
   isGenerating: false,
   isSpeaking: false,
-  voiceEnabled: true,
+  voiceEnabled: false,
   autoplayBlocked: false,
   rateLimitNotice: null,
 

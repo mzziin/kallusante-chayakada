@@ -7,6 +7,7 @@ interface ControlsProps {
   onToggleVoice: () => void;
   onResetConversation: () => void;
   isGenerating?: boolean;
+  showVoiceToggle?: boolean;
 }
 
 export const Controls: React.FC<ControlsProps> = ({
@@ -14,6 +15,7 @@ export const Controls: React.FC<ControlsProps> = ({
   onToggleVoice,
   onResetConversation,
   isGenerating = false,
+  showVoiceToggle = false,
 }) => {
   return (
     <header className="w-full max-w-2xl mx-auto px-4 py-3 flex items-center justify-between border-b border-zinc-800/80 bg-zinc-950/40 backdrop-blur-md sticky top-0 z-30">
@@ -35,26 +37,28 @@ export const Controls: React.FC<ControlsProps> = ({
       </div>
 
       <div className="flex items-center gap-2">
-        {/* Voice Toggle */}
-        <button
-          type="button"
-          onClick={onToggleVoice}
-          disabled={isGenerating}
-          aria-label={voiceEnabled ? "Mute voice (ശബ്ദം ഓഫാക്കുക)" : "Unmute voice (ശബ്ദം ഓണാക്കുക)"}
-          title={voiceEnabled ? "Voice is ON (click to mute)" : "Voice is OFF (click to unmute)"}
-          className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 border transition-all duration-200 ${
-            voiceEnabled
-              ? "bg-chai-500/15 border-chai-500/40 text-chai-300 hover:bg-chai-500/25"
-              : "bg-zinc-900/80 border-zinc-700/60 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80"
-          } focus-visible:ring-2 focus-visible:ring-chai-400`}
-        >
-          <span aria-hidden="true" className="text-sm">
-            {voiceEnabled ? "🔊" : "🔇"}
-          </span>
-          <span className="hidden sm:inline">
-            {voiceEnabled ? "Voice On" : "Voice Off"}
-          </span>
-        </button>
+        {/* Voice Toggle (conditional) */}
+        {showVoiceToggle && (
+          <button
+            type="button"
+            onClick={onToggleVoice}
+            disabled={isGenerating}
+            aria-label={voiceEnabled ? "Mute voice (ശബ്ദം ഓഫാക്കുക)" : "Unmute voice (ശബ്ദം ഓണാക്കുക)"}
+            title={voiceEnabled ? "Voice is ON (click to mute)" : "Voice is OFF (click to unmute)"}
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 border transition-all duration-200 ${
+              voiceEnabled
+                ? "bg-chai-500/15 border-chai-500/40 text-chai-300 hover:bg-chai-500/25"
+                : "bg-zinc-900/80 border-zinc-700/60 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80"
+            } focus-visible:ring-2 focus-visible:ring-chai-400`}
+          >
+            <span aria-hidden="true" className="text-sm">
+              {voiceEnabled ? "🔊" : "🔇"}
+            </span>
+            <span className="hidden sm:inline">
+              {voiceEnabled ? "Voice On" : "Voice Off"}
+            </span>
+          </button>
+        )}
 
         {/* Reset / New Conversation */}
         <button
