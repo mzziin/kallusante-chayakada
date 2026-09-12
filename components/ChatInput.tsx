@@ -108,7 +108,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           maxLength={MAX_CHARS}
           placeholder="എന്തെങ്കിലും ഒക്കെ നല്ല കാര്യം പറയൂ..."
           aria-describedby="char-counter input-error"
-          className="font-malayalam w-full bg-transparent text-zinc-100 placeholder:text-zinc-500 text-sm sm:text-base resize-none outline-none pr-12 min-h-[52px] max-h-[140px] leading-relaxed"
+          className="font-malayalam w-full bg-transparent text-zinc-100 placeholder:text-zinc-500 text-sm sm:text-base resize-none outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 border-none shadow-none pr-12 min-h-[52px] max-h-[140px] leading-relaxed"
         />
 
         {/* Action bar inside input box */}

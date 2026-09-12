@@ -79,7 +79,13 @@ button, input, textarea {
 }
 
 /* High-contrast focus state for accessibility §17 */
-:focus-visible {
+:focus-visible:not(textarea) {
   outline: 2px solid #f59e0b;
   outline-offset: 2px;
+}
+
+textarea:focus,
+textarea:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
