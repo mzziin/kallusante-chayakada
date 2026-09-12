@@ -22,7 +22,7 @@ export const FALLBACK_ROAST: RoastResponse = {
 };
 
 const GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+const GROQ_MODEL = process.env.GROQ_MODEL || "qwen/qwen3.8-27b";
 
 /**
  * Strip potential markdown code fences from model text
@@ -148,9 +148,9 @@ export async function generateRoast(request: RoastRequest): Promise<RoastRespons
   try {
     const reinforcedPrompt = `${prompt}\n\nIMPORTANT: Return ONLY valid, parseable JSON strictly matching the requested schema.`;
     const failoverModel =
-      GROQ_MODEL === "llama-3.1-8b-instant"
-        ? "llama-3.3-70b-versatile"
-        : "llama-3.1-8b-instant";
+      GROQ_MODEL === "qwen/qwen3.6-27b"
+        ? "qwen/qwen3.8-27b"
+        : "qwen/qwen3.6-27b";
 
     const { text } = await callGroqRest(
       reinforcedPrompt,
